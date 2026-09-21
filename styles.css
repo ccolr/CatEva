@@ -1,0 +1,280 @@
+:root {
+  color-scheme: light;
+  --accent: #d9788e;
+  --text: #333;
+  font-family: Arial, "Microsoft YaHei", "PingFang SC", sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html {
+  min-width: 320px;
+  background: #d8c6c2;
+}
+
+body {
+  min-height: 100vh;
+  min-height: 100svh;
+  margin: 0;
+  color: var(--text);
+  display: flex;
+  align-items: safe center;
+  justify-content: center;
+  padding: 8px 0;
+}
+
+.background {
+  position: fixed;
+  z-index: -1;
+  inset: 0;
+  background-color: #d8c6c2;
+  background-image: url("./bg.jpg");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 2160px 1296px;
+  pointer-events: none;
+}
+
+.page-shell {
+  width: min(1180px, calc(100vw - 32px), max(320px, calc(177.78svh - 500px)));
+  margin: auto;
+  border-top: 5px solid var(--accent);
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(55, 42, 48, 0.34);
+}
+
+.page-header {
+  padding: 19px 24px 17px;
+  border-bottom: 1px solid #d8d8d8;
+  background: #f7f7f7;
+}
+
+h1,
+h2,
+p { margin-top: 0; }
+
+h1 {
+  margin-bottom: 0;
+  color: #333;
+  font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+  font-size: 1.75rem;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.player-card {
+  width: calc(100% - 40px);
+  margin: 20px auto 0;
+  padding: 5px;
+  border: 1px solid #aaa;
+  border-radius: 3px;
+  background: #262626;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.22);
+}
+
+.player {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 1px;
+  background: #080808;
+}
+
+.video-js {
+  width: 100%;
+  height: 100%;
+  color: #fff;
+  background: #080808;
+  font-family: Arial, sans-serif;
+}
+
+.video-js .vjs-poster { background-size: contain; }
+
+.video-heading {
+  position: absolute;
+  z-index: 5;
+  top: 12px;
+  left: 13px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #fff;
+  font-size: 0.86rem;
+  font-weight: bold;
+  pointer-events: none;
+  text-shadow: 0 1px 3px #000;
+}
+
+.controls-hidden .video-heading { display: none; }
+
+.episode-mark {
+  padding: 3px 7px;
+  border: 1px solid #fff;
+  border-radius: 2px;
+  background: var(--accent);
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  text-shadow: none;
+}
+
+/* Video.js 提供进度、音量、全屏等基础播放能力。 */
+.video-js .vjs-control-bar {
+  height: 4em;
+  align-items: center;
+  padding: 0 0.8em;
+  background: rgba(18, 18, 18, 0.94);
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.video-js .vjs-control {
+  width: 3.5em;
+  outline: none;
+}
+
+.video-js .vjs-button > .vjs-icon-placeholder::before {
+  font-size: 1.85em;
+  line-height: 2.15;
+}
+
+.video-js .vjs-button:hover,
+.video-js .vjs-button:focus-visible { color: #f29aae; }
+
+.video-js .vjs-big-play-button {
+  top: 50%;
+  left: 50%;
+  width: 1.65em;
+  height: 1.65em;
+  margin: 0;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: rgba(20, 20, 20, 0.8);
+  font-size: clamp(3rem, 7vw, 4.2rem);
+  line-height: 1.57em;
+  transform: translate(-50%, -50%);
+}
+
+.video-js:hover .vjs-big-play-button,
+.video-js .vjs-big-play-button:focus {
+  border-color: #fff;
+  background: var(--accent);
+}
+
+.video-js .vjs-play-progress,
+.video-js .vjs-volume-level { background: var(--accent); }
+
+.video-js .vjs-play-progress::before,
+.video-js .vjs-volume-level::before { color: var(--accent); }
+
+.video-js .vjs-slider { background: rgba(255, 255, 255, 0.28); }
+.video-js .vjs-load-progress { background: rgba(255, 255, 255, 0.22); }
+.video-js .vjs-load-progress div { background: rgba(255, 255, 255, 0.3); }
+
+.video-js .vjs-progress-control {
+  position: absolute;
+  right: 0.8em;
+  bottom: 3.45em;
+  left: 0.8em;
+  width: auto;
+  height: 1.2em;
+}
+
+.video-js .vjs-progress-holder {
+  height: 0.3em;
+  margin: 0;
+}
+
+.video-js .vjs-progress-control:hover .vjs-progress-holder { height: 0.48em; }
+
+.video-js .vjs-play-progress .vjs-time-tooltip {
+  display: none !important;
+}
+
+.video-js .vjs-time-control {
+  display: block;
+  width: auto;
+  min-width: 0;
+  padding: 0 0.16em;
+  font-size: 1em;
+  line-height: 4em;
+}
+
+.video-js .vjs-time-divider { padding: 0 0.3em; }
+.video-js .vjs-duration-display { color: #bbb; }
+.video-js .vjs-fullscreen-control { margin-left: auto; }
+.video-js .vjs-volume-panel { margin-right: 0.5em; }
+.video-js .vjs-volume-bar { margin: 1.65em 0.45em; }
+
+.reflection {
+  margin: 25px 24px 0;
+  padding: 20px 0 26px;
+  border-top: 1px solid #ddd;
+}
+
+.reflection h2 {
+  margin-bottom: 13px;
+  color: #444;
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+
+.reflection-placeholder {
+  margin-bottom: 0;
+  color: #999;
+  font-size: 1rem;
+  line-height: 1.8;
+}
+
+footer {
+  padding: 13px 24px;
+  border-top: 1px solid #ddd;
+  background: #f4f4f4;
+  color: #999;
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+/* 768px 及以下使用移动端布局，并把背景焦点移到人物区域。 */
+@media (max-width: 768px) {
+  .background {
+    background-position: calc(70% + 120px) 18%;
+  }
+
+  .page-shell {
+    width: calc(100% - 12px);
+    margin: auto;
+  }
+
+  .page-header { padding: 14px 13px 12px; }
+  h1 { font-size: 1.4rem; }
+
+  .player-card {
+    width: calc(100% - 16px);
+    margin: 10px auto 0;
+    padding: 3px;
+    border-radius: 2px;
+  }
+
+  .video-heading {
+    top: 8px;
+    left: 9px;
+    font-size: 0.72rem;
+  }
+
+  .video-js .vjs-control-bar { padding: 0 0.25em; }
+  .video-js .vjs-progress-control { right: 0.45em; left: 0.45em; }
+  .video-js .vjs-volume-panel .vjs-volume-control { width: 4em; }
+
+  .reflection {
+    margin: 18px 13px 0;
+    padding: 16px 0 20px;
+  }
+
+  footer { padding: 11px 13px; }
+}
+
+@media (max-width: 440px) {
+  .video-heading { display: none; }
+  .video-js .vjs-volume-panel { display: none; }
+  .video-js .vjs-control { width: 3em; }
+  .video-js .vjs-time-control { font-size: 0.9em; }
+}

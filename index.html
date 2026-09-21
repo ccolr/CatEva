@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#191927" />
+    <title>ほしのこえ|EVA.CM</title>
+    <link rel="stylesheet" href="./vendor/video-js.min.css" />
+    <link rel="stylesheet" href="./styles.css" />
+</head>
+
+<body>
+    <div class="background" aria-hidden="true"></div>
+
+    <main class="page-shell">
+        <header class="page-header">
+            <h1>星之声 / ほしのこえ</h1>
+        </header>
+
+        <section class="player-card" aria-label="视频播放器">
+            <div class="player" id="playerWrap">
+                <video id="video" class="video-js vjs-big-play-centered" controls preload="metadata" playsinline
+                    poster="./poster.jpg">
+                    <source src="./video.mp4" type="video/mp4" />
+                    你的浏览器暂不支持 HTML5 视频播放。
+                </video>
+                <div class="video-heading" aria-hidden="true">
+                    <span class="episode-mark">MOVIE</span>
+                    <span>星之声 · Hoshi no Koe</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="reflection" aria-labelledby="reflectionTitle">
+            <h2 id="reflectionTitle">我的感想</h2>
+            <!-- 在这里替换成你的观后感正文 -->
+            <p class="reflection-placeholder">在这里写下，我为什么想把这部作品放在这里……</p>
+        </section>
+
+        <footer>星之声 · ほしのこえ</footer>
+    </main>
+
+    <script src="./vendor/video.min.js"></script>
+    <script src="./player.js"></script>
+</body>
+
+</html>
