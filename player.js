@@ -8,7 +8,6 @@ const player = videojs(
     fluid: true,
     inactivityTimeout: 2200,
     enableSmoothSeeking: true,
-    disableSeekWhileScrubbingOnMobile: true,
     volume: 0.8,
     controlBar: {
       children: [
@@ -42,58 +41,55 @@ function enforceNormalPlaybackRate() {
   }
 }
 
-function installChromeIosTouchSeeking() {
-  if (!/CriOS/.test(navigator.userAgent)) return;
-
+function installDeferredSeeking() {
   const progressControl = player.el().querySelector(".vjs-progress-control");
   const progressHolder = player.el().querySelector(".vjs-progress-holder");
+  const playProgress = player.el().querySelector(".vjs-play-progress");
   const mediaElement = player.el().querySelector("video");
   const seekBar = player.controlBar.progressControl.seekBar;
-  if (!progressControl || !progressHolder || !mediaElement || !seekBar) return;
+  const mouseTimeDisplay = seekBar?.getChild("mouseTimeDisplay");
+  if (
+    !progressControl
+    || !progressHolder
+    || !playProgress
+    || !mediaElement
+    || !seekBar
+  ) return;
 
+  let dragInput = null;
   let previewTime = null;
   let queuedTime = null;
   let seekInFlight = false;
-  let resumeAfterSeek = false;
 
-  const timeFromTouch = (touch) => {
+  const timeFromClientX = (clientX) => {
     const duration = player.duration();
     if (!Number.isFinite(duration) || duration <= 0) return null;
 
     const bounds = progressHolder.getBoundingClientRect();
+    if (bounds.width <= 0) return null;
     const fraction = Math.max(
       0,
-      Math.min(1, (touch.clientX - bounds.left) / bounds.width),
+      Math.min(1, (clientX - bounds.left) / bounds.width),
     );
     return Math.min(duration - 0.1, fraction * duration);
   };
 
-  const previewTouch = (event) => {
-    const touch = event.touches[0] || event.changedTouches[0];
-    if (!touch) return;
-    const nextTime = timeFromTouch(touch);
+  const previewAt = (clientX) => {
+    const nextTime = timeFromClientX(clientX);
     if (nextTime === null) return;
 
+    const duration = player.duration();
+    const fraction = nextTime / duration;
+    const bounds = progressHolder.getBoundingClientRect();
     previewTime = nextTime;
     seekBar.pendingSeekTime(nextTime);
-    seekBar.update();
-  };
-
-  const resumePlayback = () => {
-    if (seekInFlight || queuedTime !== null || previewTime !== null) return;
-    const shouldResume = resumeAfterSeek;
-    resumeAfterSeek = false;
-    if (shouldResume) {
-      const playAttempt = player.play();
-      if (playAttempt?.catch) playAttempt.catch(() => {});
-    }
+    seekBar.update({ target: seekBar });
+    mouseTimeDisplay?.update(bounds, fraction);
+    playProgress.style.width = `${fraction * 100}%`;
   };
 
   const runQueuedSeek = () => {
-    if (seekInFlight || queuedTime === null) {
-      resumePlayback();
-      return;
-    }
+    if (seekInFlight || queuedTime === null) return;
 
     const targetTime = queuedTime;
     queuedTime = null;
@@ -120,49 +116,81 @@ function installChromeIosTouchSeeking() {
     runQueuedSeek();
   };
 
-  progressControl.addEventListener("touchstart", (event) => {
-    if (event.touches.length !== 1) return;
+  const beginDrag = (event, input, clientX) => {
+    if (dragInput !== null) return;
     event.preventDefault();
     event.stopImmediatePropagation();
-    resumeAfterSeek = resumeAfterSeek || !player.paused();
-    if (!player.paused()) player.pause();
+    dragInput = input;
     player.scrubbing(false);
-    previewTouch(event);
-  }, { capture: true, passive: false });
+    previewAt(clientX);
+  };
 
-  progressControl.addEventListener("touchmove", (event) => {
-    if (previewTime === null) return;
+  const moveDrag = (event, input, clientX) => {
+    if (dragInput !== input) return;
     event.preventDefault();
     event.stopImmediatePropagation();
-    previewTouch(event);
-  }, { capture: true, passive: false });
+    previewAt(clientX);
+  };
 
-  progressControl.addEventListener("touchend", (event) => {
-    if (previewTime === null) return;
+  const finishDrag = (event, input, clientX) => {
+    if (dragInput !== input || previewTime === null) return;
     event.preventDefault();
     event.stopImmediatePropagation();
-    previewTouch(event);
+    previewAt(clientX);
 
     const targetTime = previewTime;
+    dragInput = null;
     previewTime = null;
     seekBar.pendingSeekTime(null);
     player.scrubbing(false);
     queueSeek(targetTime);
-  }, { capture: true, passive: false });
+  };
 
-  progressControl.addEventListener("touchcancel", (event) => {
-    if (previewTime === null) return;
+  const cancelDrag = (event, input) => {
+    if (dragInput !== input) return;
     event.preventDefault();
     event.stopImmediatePropagation();
+    dragInput = null;
     previewTime = null;
     seekBar.pendingSeekTime(null);
     player.scrubbing(false);
     seekBar.update();
-    resumePlayback();
+  };
+
+  progressControl.addEventListener("mousedown", (event) => {
+    if (event.button !== 0) return;
+    beginDrag(event, "mouse", event.clientX);
+  }, { capture: true });
+
+  document.addEventListener("mousemove", (event) => {
+    moveDrag(event, "mouse", event.clientX);
+  }, { capture: true });
+
+  document.addEventListener("mouseup", (event) => {
+    finishDrag(event, "mouse", event.clientX);
+  }, { capture: true });
+
+  progressControl.addEventListener("touchstart", (event) => {
+    if (event.touches.length !== 1) return;
+    beginDrag(event, "touch", event.touches[0].clientX);
+  }, { capture: true, passive: false });
+
+  document.addEventListener("touchmove", (event) => {
+    const touch = event.touches[0];
+    if (touch) moveDrag(event, "touch", touch.clientX);
+  }, { capture: true, passive: false });
+
+  document.addEventListener("touchend", (event) => {
+    const touch = event.changedTouches[0];
+    if (touch) finishDrag(event, "touch", touch.clientX);
+  }, { capture: true, passive: false });
+
+  document.addEventListener("touchcancel", (event) => {
+    cancelDrag(event, "touch");
   }, { capture: true, passive: false });
 }
 
-player.ready(installChromeIosTouchSeeking);
+player.ready(installDeferredSeeking);
 
 const updatePeekOffset = () => {
   const currentOffset = pageShell.classList.contains("is-peeking")
