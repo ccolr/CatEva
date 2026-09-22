@@ -36,15 +36,23 @@ body {
 }
 
 .page-shell {
+  --peek-offset: 0px;
   width: min(1180px, calc(100vw - 32px), max(320px, calc(177.78svh - 500px)));
   margin: auto;
   border-top: 5px solid var(--accent);
   background: #fff;
   box-shadow: 0 2px 8px rgba(55, 42, 48, 0.34);
+  transform: translateY(0);
+  transition: transform 620ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  will-change: transform;
 }
 
+.page-shell.is-peeking { transform: translateY(var(--peek-offset)); }
+
 .page-header {
-  padding: 19px 24px 17px;
+  display: flex;
+  align-items: stretch;
+  padding-left: 24px;
   border-bottom: 1px solid #d8d8d8;
   background: #f7f7f7;
 }
@@ -54,12 +62,57 @@ h2,
 p { margin-top: 0; }
 
 h1 {
+  flex: 1;
   margin-bottom: 0;
+  padding: 19px 18px 17px 0;
   color: #333;
   font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
   font-size: 1.75rem;
   font-weight: 500;
   line-height: 1.35;
+}
+
+.peek-toggle {
+  display: grid;
+  flex: 0 0 70px;
+  place-items: center;
+  min-width: 44px;
+  padding: 0;
+  border: 0;
+  border-left: 1px solid #b7b7b7;
+  border-radius: 0;
+  background: linear-gradient(#f7f7f7, #d7d7d7);
+  color: #3d3d3d;
+  cursor: pointer;
+  box-shadow:
+    inset 1px 0 rgba(255, 255, 255, 0.8),
+    inset 0 1px rgba(255, 255, 255, 0.85),
+    0 1px 2px rgba(0, 0, 0, 0.12);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.peek-toggle:hover { background: linear-gradient(#fff, #dedede); }
+
+.peek-toggle:active,
+.peek-toggle[aria-pressed="true"] {
+  background: linear-gradient(#cecece, #ededed);
+  box-shadow:
+    inset 1px 2px 4px rgba(0, 0, 0, 0.18),
+    inset 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.peek-toggle:focus-visible {
+  position: relative;
+  z-index: 1;
+  outline: 3px solid color-mix(in srgb, var(--accent) 70%, white);
+  outline-offset: -4px;
+}
+
+.peek-toggle-icon {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+  filter: drop-shadow(0 1px 0 #fff);
 }
 
 .player-card {
@@ -244,8 +297,14 @@ footer {
     margin: auto;
   }
 
-  .page-header { padding: 14px 13px 12px; }
-  h1 { font-size: 1.4rem; }
+  .page-header { padding: 0 0 0 13px; }
+
+  h1 {
+    padding: 14px 10px 12px 0;
+    font-size: 1.4rem;
+  }
+
+  .peek-toggle { flex-basis: 56px; }
 
   .player-card {
     width: calc(100% - 16px);
@@ -270,6 +329,10 @@ footer {
   }
 
   footer { padding: 11px 13px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-shell { transition-duration: 1ms; }
 }
 
 @media (max-width: 440px) {

@@ -26,6 +26,45 @@ const player = videojs(
 );
 
 const playerWrap = document.querySelector("#playerWrap");
+const pageShell = document.querySelector(".page-shell");
+const peekToggle = document.querySelector("#peekToggle");
+
+const updatePeekOffset = () => {
+  const currentOffset = pageShell.classList.contains("is-peeking")
+    ? Number.parseFloat(
+        getComputedStyle(pageShell).getPropertyValue("--peek-offset"),
+      ) || 0
+    : 0;
+  const shellTop = pageShell.getBoundingClientRect().top - currentOffset;
+  const targetTop = window.innerHeight * 0.7;
+  pageShell.style.setProperty(
+    "--peek-offset",
+    `${Math.max(0, targetTop - shellTop)}px`,
+  );
+};
+
+const setPeeking = (isPeeking) => {
+  if (isPeeking) updatePeekOffset();
+
+  pageShell.classList.toggle("is-peeking", isPeeking);
+  peekToggle.setAttribute("aria-pressed", String(isPeeking));
+  peekToggle.setAttribute(
+    "aria-label",
+    isPeeking ? "恢复卡片居中" : "下移卡片以查看背景",
+  );
+  peekToggle.title = isPeeking ? "恢复居中" : "查看背景";
+};
+
+peekToggle.addEventListener("click", () => {
+  setPeeking(!pageShell.classList.contains("is-peeking"));
+});
+
+let resizeFrame;
+window.addEventListener("resize", () => {
+  if (!pageShell.classList.contains("is-peeking")) return;
+  cancelAnimationFrame(resizeFrame);
+  resizeFrame = requestAnimationFrame(updatePeekOffset);
+});
 
 player.on("play", () => playerWrap.classList.add("is-playing"));
 player.on("pause", () => playerWrap.classList.remove("is-playing"));
