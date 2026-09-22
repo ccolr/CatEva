@@ -320,7 +320,12 @@ footer {
   }
 
   .video-js .vjs-control-bar { padding: 0 0.25em; }
-  .video-js .vjs-progress-control { right: 0.45em; left: 0.45em; }
+  .video-js .vjs-progress-control {
+    right: 0.45em;
+    bottom: 2.5em;
+    left: 0.45em;
+    height: 3em;
+  }
   .video-js .vjs-volume-panel .vjs-volume-control { width: 4em; }
 
   .reflection {
@@ -338,6 +343,6 @@ footer {
 @media (max-width: 440px) {
   .video-heading { display: none; }
   .video-js .vjs-volume-panel { display: none; }
-  .video-js .vjs-control { width: 3em; }
+  .video-js .vjs-control:not(.vjs-progress-control) { width: 3em; }
   .video-js .vjs-time-control { font-size: 0.9em; }
 }
