@@ -1,3 +1,5 @@
+const NORMAL_PLAYBACK_RATE = 1;
+
 const player = videojs(
   "video",
   {
@@ -20,6 +22,7 @@ const player = videojs(
     },
   },
   () => {
+    enforceNormalPlaybackRate();
     // 明确保持初始暂停，避免浏览器扩展恢复上次播放。
     player.pause();
   },
@@ -28,6 +31,14 @@ const player = videojs(
 const playerWrap = document.querySelector("#playerWrap");
 const pageShell = document.querySelector(".page-shell");
 const peekToggle = document.querySelector("#peekToggle");
+
+function enforceNormalPlaybackRate() {
+  const mediaElement = player.el().querySelector("video");
+  if (mediaElement) mediaElement.defaultPlaybackRate = NORMAL_PLAYBACK_RATE;
+  if (player.playbackRate() !== NORMAL_PLAYBACK_RATE) {
+    player.playbackRate(NORMAL_PLAYBACK_RATE);
+  }
+}
 
 const updatePeekOffset = () => {
   const currentOffset = pageShell.classList.contains("is-peeking")
@@ -66,7 +77,12 @@ window.addEventListener("resize", () => {
   resizeFrame = requestAnimationFrame(updatePeekOffset);
 });
 
-player.on("play", () => playerWrap.classList.add("is-playing"));
+player.on("loadedmetadata", enforceNormalPlaybackRate);
+player.on("ratechange", enforceNormalPlaybackRate);
+player.on("play", () => {
+  enforceNormalPlaybackRate();
+  playerWrap.classList.add("is-playing");
+});
 player.on("pause", () => playerWrap.classList.remove("is-playing"));
 player.on("ended", () => playerWrap.classList.remove("is-playing"));
 
