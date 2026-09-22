@@ -325,6 +325,9 @@ footer {
     bottom: 2.5em;
     left: 0.45em;
     height: 3em;
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
   }
   .video-js .vjs-volume-panel .vjs-volume-control { width: 4em; }
 

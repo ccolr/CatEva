@@ -43,6 +43,88 @@ function enforceNormalPlaybackRate() {
   }
 }
 
+function installIosTouchSeeking() {
+  const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent)
+    || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  if (!isIos) return;
+
+  const progressControl = player.el().querySelector(".vjs-progress-control");
+  const progressHolder = player.el().querySelector(".vjs-progress-holder");
+  const seekBar = player.controlBar.progressControl.seekBar;
+  if (!progressControl || !progressHolder || !seekBar) return;
+
+  let pendingTime = null;
+  let resumeAfterSeek = false;
+
+  const timeFromTouch = (touch) => {
+    const duration = player.duration();
+    if (!Number.isFinite(duration) || duration <= 0) return null;
+
+    const bounds = progressHolder.getBoundingClientRect();
+    const fraction = Math.max(
+      0,
+      Math.min(1, (touch.clientX - bounds.left) / bounds.width),
+    );
+    return Math.min(duration - 0.1, fraction * duration);
+  };
+
+  const previewTouch = (event) => {
+    const touch = event.touches[0] || event.changedTouches[0];
+    if (!touch) return;
+    const nextTime = timeFromTouch(touch);
+    if (nextTime === null) return;
+
+    pendingTime = nextTime;
+    seekBar.pendingSeekTime(nextTime);
+    seekBar.update();
+  };
+
+  progressControl.addEventListener("touchstart", (event) => {
+    if (event.touches.length !== 1) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    resumeAfterSeek = !player.paused();
+    if (resumeAfterSeek) player.pause();
+    player.scrubbing(true);
+    previewTouch(event);
+  }, { capture: true, passive: false });
+
+  progressControl.addEventListener("touchmove", (event) => {
+    if (pendingTime === null) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    previewTouch(event);
+  }, { capture: true, passive: false });
+
+  progressControl.addEventListener("touchend", (event) => {
+    if (pendingTime === null) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    previewTouch(event);
+
+    const targetTime = pendingTime;
+    pendingTime = null;
+    seekBar.pendingSeekTime(null);
+    player.currentTime(targetTime);
+    player.scrubbing(false);
+    player.trigger("timeupdate");
+    if (resumeAfterSeek) player.play();
+  }, { capture: true, passive: false });
+
+  progressControl.addEventListener("touchcancel", (event) => {
+    if (pendingTime === null) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    pendingTime = null;
+    seekBar.pendingSeekTime(null);
+    player.scrubbing(false);
+    seekBar.update();
+    if (resumeAfterSeek) player.play();
+  }, { capture: true, passive: false });
+}
+
+player.ready(installIosTouchSeeking);
+
 const updatePeekOffset = () => {
   const currentOffset = pageShell.classList.contains("is-peeking")
     ? Number.parseFloat(
