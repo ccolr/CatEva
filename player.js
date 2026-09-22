@@ -122,6 +122,7 @@ function installDeferredSeeking() {
     event.stopImmediatePropagation();
     dragInput = input;
     player.scrubbing(false);
+    player.addClass("is-preview-seeking");
     previewAt(clientX);
   };
 
@@ -133,17 +134,18 @@ function installDeferredSeeking() {
   };
 
   const finishDrag = (event, input, clientX) => {
-    if (dragInput !== input || previewTime === null) return;
+    if (dragInput !== input) return;
     event.preventDefault();
     event.stopImmediatePropagation();
-    previewAt(clientX);
+    if (Number.isFinite(clientX)) previewAt(clientX);
 
     const targetTime = previewTime;
     dragInput = null;
     previewTime = null;
     seekBar.pendingSeekTime(null);
     player.scrubbing(false);
-    queueSeek(targetTime);
+    player.removeClass("is-preview-seeking");
+    if (targetTime !== null) queueSeek(targetTime);
   };
 
   const cancelDrag = (event, input) => {
@@ -154,6 +156,7 @@ function installDeferredSeeking() {
     previewTime = null;
     seekBar.pendingSeekTime(null);
     player.scrubbing(false);
+    player.removeClass("is-preview-seeking");
     seekBar.update();
   };
 
@@ -182,7 +185,7 @@ function installDeferredSeeking() {
 
   document.addEventListener("touchend", (event) => {
     const touch = event.changedTouches[0];
-    if (touch) finishDrag(event, "touch", touch.clientX);
+    finishDrag(event, "touch", touch?.clientX);
   }, { capture: true, passive: false });
 
   document.addEventListener("touchcancel", (event) => {

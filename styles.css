@@ -238,6 +238,15 @@ h1 {
 
 .video-js .vjs-progress-control:hover .vjs-progress-holder { height: 0.48em; }
 
+.video-js.is-preview-seeking .vjs-progress-control .vjs-mouse-display,
+.video-js.vjs-touch-enabled.is-preview-seeking
+  .vjs-progress-control .vjs-mouse-display {
+  display: block;
+  visibility: visible;
+  opacity: 1;
+  transition: none;
+}
+
 .video-js .vjs-play-progress .vjs-time-tooltip {
   display: none !important;
 }
