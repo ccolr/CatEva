@@ -43,17 +43,18 @@ function enforceNormalPlaybackRate() {
   }
 }
 
-function installIosTouchSeeking() {
-  const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent)
-    || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-  if (!isIos) return;
+function installChromeIosTouchSeeking() {
+  if (!/CriOS/.test(navigator.userAgent)) return;
 
   const progressControl = player.el().querySelector(".vjs-progress-control");
   const progressHolder = player.el().querySelector(".vjs-progress-holder");
+  const mediaElement = player.el().querySelector("video");
   const seekBar = player.controlBar.progressControl.seekBar;
-  if (!progressControl || !progressHolder || !seekBar) return;
+  if (!progressControl || !progressHolder || !mediaElement || !seekBar) return;
 
-  let pendingTime = null;
+  let previewTime = null;
+  let queuedTime = null;
+  let seekInFlight = false;
   let resumeAfterSeek = false;
 
   const timeFromTouch = (touch) => {
@@ -74,56 +75,95 @@ function installIosTouchSeeking() {
     const nextTime = timeFromTouch(touch);
     if (nextTime === null) return;
 
-    pendingTime = nextTime;
+    previewTime = nextTime;
     seekBar.pendingSeekTime(nextTime);
     seekBar.update();
+  };
+
+  const resumePlayback = () => {
+    if (seekInFlight || queuedTime !== null || previewTime !== null) return;
+    const shouldResume = resumeAfterSeek;
+    resumeAfterSeek = false;
+    if (shouldResume) {
+      const playAttempt = player.play();
+      if (playAttempt?.catch) playAttempt.catch(() => {});
+    }
+  };
+
+  const runQueuedSeek = () => {
+    if (seekInFlight || queuedTime === null) {
+      resumePlayback();
+      return;
+    }
+
+    const targetTime = queuedTime;
+    queuedTime = null;
+
+    if (Math.abs(mediaElement.currentTime - targetTime) < 0.05) {
+      runQueuedSeek();
+      return;
+    }
+
+    seekInFlight = true;
+
+    mediaElement.addEventListener("seeked", () => {
+      seekInFlight = false;
+      player.trigger("timeupdate");
+      runQueuedSeek();
+    }, { once: true });
+
+    // 直接设置原生 currentTime，避免 Video.js 在 iOS 上改用 fastSeek。
+    mediaElement.currentTime = targetTime;
+  };
+
+  const queueSeek = (targetTime) => {
+    queuedTime = targetTime;
+    runQueuedSeek();
   };
 
   progressControl.addEventListener("touchstart", (event) => {
     if (event.touches.length !== 1) return;
     event.preventDefault();
     event.stopImmediatePropagation();
-    resumeAfterSeek = !player.paused();
-    if (resumeAfterSeek) player.pause();
-    player.scrubbing(true);
+    resumeAfterSeek = resumeAfterSeek || !player.paused();
+    if (!player.paused()) player.pause();
+    player.scrubbing(false);
     previewTouch(event);
   }, { capture: true, passive: false });
 
   progressControl.addEventListener("touchmove", (event) => {
-    if (pendingTime === null) return;
+    if (previewTime === null) return;
     event.preventDefault();
     event.stopImmediatePropagation();
     previewTouch(event);
   }, { capture: true, passive: false });
 
   progressControl.addEventListener("touchend", (event) => {
-    if (pendingTime === null) return;
+    if (previewTime === null) return;
     event.preventDefault();
     event.stopImmediatePropagation();
     previewTouch(event);
 
-    const targetTime = pendingTime;
-    pendingTime = null;
+    const targetTime = previewTime;
+    previewTime = null;
     seekBar.pendingSeekTime(null);
-    player.currentTime(targetTime);
     player.scrubbing(false);
-    player.trigger("timeupdate");
-    if (resumeAfterSeek) player.play();
+    queueSeek(targetTime);
   }, { capture: true, passive: false });
 
   progressControl.addEventListener("touchcancel", (event) => {
-    if (pendingTime === null) return;
+    if (previewTime === null) return;
     event.preventDefault();
     event.stopImmediatePropagation();
-    pendingTime = null;
+    previewTime = null;
     seekBar.pendingSeekTime(null);
     player.scrubbing(false);
     seekBar.update();
-    if (resumeAfterSeek) player.play();
+    resumePlayback();
   }, { capture: true, passive: false });
 }
 
-player.ready(installIosTouchSeeking);
+player.ready(installChromeIosTouchSeeking);
 
 const updatePeekOffset = () => {
   const currentOffset = pageShell.classList.contains("is-peeking")
