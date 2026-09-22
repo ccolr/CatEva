@@ -7,6 +7,9 @@ const player = videojs(
     controls: true,
     fluid: true,
     inactivityTimeout: 2200,
+    enableSmoothSeeking: true,
+    disableSeekWhileScrubbingOnMobile: true,
+    disableSeekWhileScrubbingOnSTV: true,
     volume: 0.8,
     controlBar: {
       children: [
